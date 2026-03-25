@@ -1,3 +1,4 @@
+/* frontend/src/components/layout/GovtFooter.css */
 .govt-footer {
   background: var(--navy-blue);
   color: var(--white);
@@ -18,8 +19,8 @@
 
 .footer-section h3 {
   color: var(--saffron);
-  margin-bottom: 1.5rem;
-  font-size: 1.2rem;
+  margin-bottom: 1.2rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -30,14 +31,13 @@
 }
 
 .footer-links li {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.7rem;
 }
 
 .footer-links a {
-  color: var(--white);
+  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
-  font-size: 0.95rem;
-  opacity: 0.9;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -45,100 +45,77 @@
 }
 
 .footer-links a:hover {
-  opacity: 1;
   color: var(--saffron);
-  transform: translateX(5px);
-}
-
-.contact-info {
-  font-size: 0.95rem;
-  opacity: 0.9;
+  transform: translateX(4px);
 }
 
 .contact-info p {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.7rem;
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .contact-info i {
   color: var(--saffron);
-  width: 20px;
+  width: 18px;
   text-align: center;
 }
 
 .footer-bottom {
   max-width: 1400px;
   margin: 0 auto;
-  padding-top: 2rem;
+  padding-top: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .copyright {
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.copyright p {
-  margin-bottom: 0.5rem;
-}
+.copyright p { margin-bottom: 0.4rem; }
 
 .disclaimer {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #FFD700;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-top: 6px;
 }
 
 .security-badges {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .badge {
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 1rem;
   border-radius: 50px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
-.ssl-badge {
-  background: var(--green);
-  color: var(--white);
-}
-
-.verified-badge {
-  background: var(--saffron);
-  color: var(--dark-gray);
-}
+.ssl-badge      { background: var(--green); color: var(--white); }
+.verified-badge { background: var(--saffron); color: var(--navy-blue); }
+.blockchain-badge { background: rgba(79, 156, 249, 0.2); border: 1px solid #4f9cf9; color: #4f9cf9; }
 
 @media (max-width: 992px) {
-  .footer-content {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .footer-content { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-  
-  .footer-bottom {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .security-badges {
-    justify-content: center;
-  }
+  .footer-content { grid-template-columns: 1fr; gap: 2rem; }
+  .footer-bottom  { flex-direction: column; text-align: center; }
+  .security-badges { justify-content: center; }
 }

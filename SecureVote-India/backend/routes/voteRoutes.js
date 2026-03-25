@@ -1,8 +1,10 @@
-const express = require("express");
-const router = express.Router();
+// backend/routes/voteRoutes.js
+const express = require('express');
+const router  = express.Router();
+const { castVote } = require('../controllers/voteController');
+const authenticateUser = require('../middleware/auth');
 
-const { castVote } = require("../controllers/voteController");
-
-router.post("/cast", castVote);
+// POST /api/vote — protected, voters only
+router.post('/', authenticateUser, castVote);
 
 module.exports = router;

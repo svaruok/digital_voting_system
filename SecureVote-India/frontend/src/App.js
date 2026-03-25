@@ -1,47 +1,76 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import './App.css';
-
-// Import Components
-import LoginPage from './pages/LoginPage';
+import { LanguageProvider } from './contexts/LanguageContext';
+import GovtHeader    from './components/layout/GovtHeader';
+import GovtFooter    from './components/layout/GovtFooter';
+import LoginPage     from './pages/LoginPage.jsx';
 import UserDashboard from './pages/UserDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import VotingPage from './pages/VotingPage';
+import VotingPage    from './pages/VotingPage';
+import Admin         from './pages/Admin';
+import Dashboard     from './pages/Dashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import GovtHeader from './components/layout/GovtHeader';
-import GovtFooter from './components/layout/GovtFooter';
 
 function App() {
   return (
     <Router>
-      <div className="app">
-        <Toaster position="top-right" />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#0A0F2C',
+            color: '#fff',
+            border: '1px solid #FF9933',
+            borderRadius: '10px',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '0.9rem'
+          }
+        }}
+      />
+
+      <LanguageProvider>
         <GovtHeader />
-        <main className="main-content">
+        <main style={{ minHeight: 'calc(100vh - 160px)' }}>
           <Routes>
-            <Route path="/" element={<LoginPage />} />
+            {/* Default: go to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+
+            {/* Public */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/user/dashboard" element={
-              <ProtectedRoute allowedRoles={['user']}>
+
+            {/* Voter protected */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute allowedRoles={['voter']}>
                 <UserDashboard />
               </ProtectedRoute>
             } />
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute allowedRoles={['super', 'constituency']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
             <Route path="/vote" element={
-              <ProtectedRoute allowedRoles={['user']}>
+              <ProtectedRoute allowedRoles={['voter']}>
                 <VotingPage />
               </ProtectedRoute>
             } />
-            <Route path="*" element={<Navigate to="/" replace />} />
+
+            {/* Admin protected */}
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['super', 'district', 'booth']}>
+                <Admin />
+              </ProtectedRoute>
+            } />
+
+            {/* Old dashboard redirect */}
+            <Route path="/old-dashboard" element={
+              <ProtectedRoute allowedRoles={['super', 'district', 'booth']}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </main>
         <GovtFooter />
-      </div>
+      </LanguageProvider>
     </Router>
   );
 }

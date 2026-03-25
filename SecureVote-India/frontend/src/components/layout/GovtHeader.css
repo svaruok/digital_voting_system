@@ -1,9 +1,10 @@
+/* frontend/src/components/layout/GovtHeader.css */
 .govt-header {
-  background: linear-gradient(to right, var(--saffron), var(--white), var(--green));
+  background: linear-gradient(to right, var(--saffron) 0%, #fff 50%, var(--green) 100%);
   padding: 0.8rem 2rem;
   border-bottom: 3px solid var(--navy-blue);
   position: relative;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
 }
 
 .govt-logo-container {
@@ -26,20 +27,17 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.govt-title {
-  text-align: left;
-}
-
 .govt-title h1 {
   color: var(--navy-blue);
-  font-size: 1.8rem;
-  margin-bottom: 0.3rem;
+  font-size: 1.6rem;
+  margin-bottom: 0.2rem;
   font-weight: 700;
+  font-family: 'Playfair Display', serif;
 }
 
 .govt-title h2 {
   color: var(--ashoka-blue);
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -53,14 +51,15 @@
   background: var(--navy-blue);
   color: var(--white);
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   transition: all 0.3s ease;
+  font-family: 'Outfit', sans-serif;
 }
 
 .logout-btn:hover {
@@ -68,27 +67,24 @@
   transform: translateY(-1px);
 }
 
-.official-seal {
-  text-align: right;
-}
-
 .seal {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--navy-blue);
   font-weight: bold;
   border: 2px solid var(--navy-blue);
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 1rem;
   border-radius: 50px;
-  background: var(--white);
+  background: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
 }
 
 .language-selector {
-  background: var(--light-gray);
+  background: var(--navy-blue);
   padding: 0.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--medium-gray);
+  border-bottom: 2px solid var(--saffron);
 }
 
 .lang-buttons {
@@ -97,27 +93,29 @@
 }
 
 .lang-btn {
-  background: var(--white);
-  border: 1px solid var(--navy-blue);
-  color: var(--navy-blue);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
   padding: 0.3rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: all 0.3s ease;
+  font-family: 'Outfit', sans-serif;
 }
 
 .lang-btn:hover,
 .lang-btn.active {
-  background: var(--navy-blue);
-  color: var(--white);
+  background: var(--saffron);
+  border-color: var(--saffron);
+  color: #fff;
 }
 
 .header-info {
   display: flex;
   gap: 1.5rem;
-  font-size: 0.9rem;
-  color: var(--dark-gray);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .info-item {
@@ -127,28 +125,11 @@
 }
 
 @media (max-width: 768px) {
-  .govt-header {
-    padding: 0.8rem 1rem;
-  }
-  
-  .govt-logo-container {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .header-actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .language-selector {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  
-  .lang-buttons {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  .govt-header { padding: 0.8rem 1rem; }
+  .govt-logo-container { flex-direction: column; gap: 0.8rem; text-align: center; }
+  .emblem-container { flex-direction: column; }
+  .govt-title h1 { font-size: 1.2rem; }
+  .header-actions { flex-wrap: wrap; justify-content: center; }
+  .language-selector { flex-direction: column; gap: 0.8rem; padding: 0.8rem 1rem; }
+  .header-info { flex-wrap: wrap; justify-content: center; }
 }

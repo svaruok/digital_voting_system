@@ -1,202 +1,233 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Bar, Pie } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
 import './Dashboard.css';
 
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState(null);
-  const [votingStatus, setVotingStatus] = useState(null);
-  const [electionData, setElectionData] = useState(null);
-  const [constituencyStats, setConstituencyStats] = useState(null);
+  const [wallet, setWallet] = useState('');
+  const [chainOk, setChainOk] = useState(false);
+  const [connectingWallet, setConnectingWallet] = useState(false);
+  const [stats, setStats] = useState({});
+
+  const SEPOLIA_CHAIN_ID = '0xaa36a7';
 
   useEffect(() => {
-    fetchUserData();
-    fetchVotingStatus();
-    fetchElectionData();
+    fetchProfile();
+    fetchStats();
+    checkWallet();
   }, []);
 
-  const fetchUserData = async () => {
+  const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/user/profile', {
+      const { data } = await axios.get(`${API}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUserData(response.data);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  const fetchVotingStatus = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/user/voting-status', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVotingStatus(response.data);
-    } catch (error) {
-      console.error('Error fetching voting status:', error);
-    }
-  };
-
-  const fetchElectionData = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/elections/current');
-      if (response.data.length > 0) {
-        setElectionData(response.data[0]);
-        fetchConstituencyStats(response.data[0].constituencies[0]);
+      setUser(data);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        navigate('/login');
       }
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching election data:', error);
+      toast.error(t('profileError') || 'Failed to load profile');
+    } finally {
       setLoading(false);
     }
   };
 
-  const fetchConstituencyStats = async (constituency) => {
+  const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:5000/api/candidates/${constituency}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setConstituencyStats(response.data);
-    } catch (error) {
-      console.error('Error fetching constituency stats:', error);
-    }
+      const { data } = await axios.get(`${API}/api/admin/stats`);
+      setStats(data);
+    } catch {}
   };
 
-  const handleProceedToVote = () => {
-    navigate('/vote');
+  const checkWallet = async () => {
+    if (!window.ethereum) return;
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        setWallet(accounts[0]);
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        setChainOk(chainId === SEPOLIA_CHAIN_ID);
+      }
+    } catch {}
+  };
+
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      toast.error(t('noMetaMask') || 'MetaMask not found!');
+      return;
+    }
+    setConnectingWallet(true);
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setWallet(accounts[0]);
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: SEPOLIA_CHAIN_ID }]
+      });
+      setChainOk(true);
+      toast.success(t('walletConnected') || 'MetaMask connected!');
+    } catch (err) {
+      if (err.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: SEPOLIA_CHAIN_ID,
+            chainName: 'Sepolia Testnet',
+            rpcUrls: ['https://rpc.sepolia.org'],
+            nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
+            blockExplorerUrls: ['https://sepolia.etherscan.io']
+          }]
+        });
+        setChainOk(true);
+      } else {
+        toast.error(t('walletError') || 'Please switch to Sepolia');
+      }
+    } finally {
+      setConnectingWallet(false);
+    }
   };
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/');
+    navigate('/login');
+    toast.success(t('loggedOut') || 'Logged out successfully');
   };
 
   if (loading) {
     return (
       <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading your dashboard...</p>
+        <div className="spinner"></div>
+        <p>{t('loadingProfile') || 'Loading your profile...'}</p>
       </div>
     );
   }
 
-  // Prepare chart data
-  const candidateChartData = {
-    labels: constituencyStats?.map(c => c.party) || [],
-    datasets: [
-      {
-        label: 'Votes',
-        data: constituencyStats?.map(c => c.votes) || [],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(153, 102, 255, 0.7)'
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)'
-        ],
-        borderWidth: 1
-      }
-    ]
-  };
+  const isVoted = user?.hasVoted;
 
   return (
-    <div className="dashboard user-dashboard">
-      <div className="dashboard-header">
+    <div className="dashboard">
+      {/* Hero Header */}
+      <div className="hero-header">
         <div className="welcome-section">
-          <h1>
-            <i className="fas fa-user-circle"></i> Welcome, {userData?.fullName || 'Voter'}
-          </h1>
-          <p>Voter ID: {userData?.voterId} | Constituency: {userData?.constituency}</p>
+          <h1>{t('welcome')} {user?.fullName?.split(' ')[0]} 👋</h1>
+          <div className="status-badge voted-{isVoted ? 'yes' : 'no'}">
+            {isVoted ? (
+              <>
+                <i className="fas fa-check-circle"></i>
+                {t('voted') || 'Voted Successfully'}
+              </>
+            ) : (
+              <>
+                <i className="fas fa-clock"></i>
+                {t('readyToVote') || 'Ready to Vote'}
+              </>
+            )}
+          </div>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-secondary" onClick={handleProceedToVote}>
-            <i className="fas fa-vote-yea"></i> Proceed to Vote
-          </button>
-          <button className="btn btn-outline" onClick={handleLogout}>
-            <i className="fas fa-sign-out-alt"></i> Logout
-          </button>
+        <button className="logout-btn" onClick={handleLogout}>
+          <i className="fas fa-sign-out-alt"></i>
+          {t('logout') || 'Logout'}
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="stats-grid">
+        <div className="stat-card election">
+          <i className="fas fa-vote-yea"></i>
+          <div>
+            <h3>{stats.activeElections || 1}</h3>
+            <p>{t('activeElections') || 'Active Elections'}</p>
+          </div>
+        </div>
+        <div className="stat-card turnout">
+          <i className="fas fa-chart-line"></i>
+          <div>
+            <h3>{stats.turnout || '0%'}</h3>
+            <p>{t('turnout') || 'Voter Turnout'}</p>
+          </div>
+        </div>
+        <div className="stat-card candidates">
+          <i className="fas fa-users"></i>
+          <div>
+            <h3>{stats.totalCandidates || 4}</h3>
+            <p>{t('candidates') || 'Candidates'}</p>
+          </div>
+        </div>
+        <div className="stat-card voters">
+          <i className="fas fa-user-check"></i>
+          <div>
+            <h3>{stats.totalVoters || 0}</h3>
+            <p>{t('registeredVoters') || 'Registered Voters'}</p>
+          </div>
         </div>
       </div>
 
-      <div className="dashboard-grid">
-        {/* Voting Status Card */}
-        <div className={`status-card ${votingStatus?.hasVoted ? 'voted' : 'not-voted'}`}>
-          <div className="status-icon">
-            {votingStatus?.hasVoted ? (
-              <i className="fas fa-check-circle"></i>
-            ) : (
-              <i className="fas fa-clock"></i>
-            )}
+      {/* Main Actions */}
+      <div className="action-section">
+        {!isVoted && (
+          <div className="vote-now-card">
+            <div className="vote-icon">🗳️</div>
+            <h2>{t('yourVoteAwaits') || 'Your Vote Awaits'}</h2>
+            <p>{t('makeVoiceHeard') || 'Make your voice heard in democracy'}</p>
+            <button className="primary-btn" onClick={() => navigate('/vote')}>
+              {t('voteNow') || 'Vote Now'}
+            </button>
           </div>
-          <div className="status-content">
-            <h3>Voting Status</h3>
-            {votingStatus?.hasVoted ? (
-              <>
-                <p className="status-text">You have already voted</p>
-                <p className="status-detail">
-                  Voted for: <strong>{votingStatus.candidate?.name}</strong>
-                </p>
-                <p className="status-detail">
-                  Party: <strong>{votingStatus.candidate?.party}</strong>
-                </p>
-                <p className="status-time">
-                  <i className="fas fa-clock"></i> 
-                  {new Date(votingStatus.voteTimestamp).toLocaleString()}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="status-text">You haven't voted yet</p>
-                <p className="status-note">
-                  <i className="fas fa-info-circle"></i>
-                  Please proceed to cast your vote
-                </p>
-              </>
-            )}
-          </div>
-        </div>
+        )}
 
-        {/* User Profile Card */}
-        <div className="card profile-card">
-          <h3><i className="fas fa-id-card"></i> Voter Profile</h3>
-          <div className="profile-info">
-            <div className="info-row">
-              <span className="info-label">Full Name:</span>
-              <span className="info-value">{userData?.fullName}</span>
+        {/* Wallet Card */}
+        <div className="wallet-card">
+          <h3><i className="fab fa-ethereum"></i> {t('blockchainWallet') || 'Blockchain Wallet'}</h3>
+          {wallet ? (
+            <div className={`wallet-status ${chainOk ? 'success' : 'warning'}`}>
+              <span>{wallet.slice(0,6)}...{wallet.slice(-4)}</span>
+              <span>{chainOk ? 'Sepolia ✓' : 'Switch to Sepolia ⚠'}</span>
             </div>
-            <
+          ) : (
+            <button className="wallet-connect-btn" onClick={connectWallet} disabled={connectingWallet}>
+              {connectingWallet ? (
+                <><i className="fas fa-spinner fa-spin"></i> {t('connecting') || 'Connecting...'}</>
+              ) : (
+                <><i className="fas fa-wallet"></i> {t('connectWallet') || 'Connect MetaMask'}</>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Profile Section */}
+      <div className="profile-section">
+        <h3><i className="fas fa-id-card"></i> {t('voterProfile') || 'Voter Profile'}</h3>
+        <div className="profile-grid">
+          {[
+            ['voterId', t('voterId') || 'Voter ID', user?.voterId],
+            ['fullName', t('fullName') || 'Full Name', user?.fullName],
+            ['dob', t('dob') || 'Date of Birth', user?.dateOfBirth],
+            ['email', t('email') || 'Email', user?.email],
+            ['phone', t('phone') || 'Phone', user?.phone],
+            ['state', t('state') || 'State', user?.state],
+            ['registered', t('registeredOn') || 'Registered On', user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'],
+          ].map(([key, label, value]) => (
+            <div className="profile-item" key={key}>
+              <span className="label">{label}</span>
+              <span className="value">{value || '—'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserDashboard;

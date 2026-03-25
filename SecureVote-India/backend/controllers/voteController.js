@@ -1,30 +1,50 @@
-const User = require("../models/user");
-
-const Candidate = require("../models/candidate");
+const mongoose = require('mongoose');
+const User = require('../models/user');
+const Candidate = require('../models/candidate');
 
 exports.castVote = async (req, res) => {
+  const { candidateId, txHash, walletAddress } = req.body;
 
-  const { userId, candidateId } = req.body;
+  // ✅ FIX: validate ID
+  if (!mongoose.isValidObjectId(candidateId)) {
+    return res.status(400).json({ error: 'Invalid candidate ID' });
+  }
 
   try {
+    const user = await User.findOneAndUpdate(
+      { _id: req.user.id, hasVoted: false },
+      {
+        hasVoted: true,
+        txHash: txHash || null,
+        walletAddress: walletAddress || null
+      },
+      { new: true }
+    );
 
-    const user = await User.findById(userId);
-
-    if (user.hasVoted) {
-      return res.status(400).json({ message: "You already voted" });
+    if (!user) {
+      return res.status(400).json({ error: 'Already voted or user not found' });
     }
 
-    const candidate = await Candidate.findById(candidateId);
+    const candidate = await Candidate.findByIdAndUpdate(
+      candidateId,
+      {
+        $inc: {
+          votes: 1,
+          blockchainVotes: txHash ? 1 : 0
+        }
+      },
+      { new: true }
+    );
 
-    candidate.votes += 1;
-    await candidate.save();
+    if (!candidate) {
+      await User.findByIdAndUpdate(req.user.id, { hasVoted: false });
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
 
-    user.hasVoted = true;
-    await user.save();
+    res.json({ message: 'Vote cast successfully' });
 
-    res.json({ message: "Vote Cast Successfully" });
-
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Vote failed' });
   }
 };

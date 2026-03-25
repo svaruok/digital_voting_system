@@ -1,12 +1,15 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 
 const {
   addCandidate,
-  getCandidates
-} = require("../controllers/candidateController");
+  getCandidatesByConstituency,
+  deleteCandidate
+} = require('../controllers/candidateController');
 
-router.post("/add", addCandidate);
-router.get("/all", getCandidates);
+router.post('/admin/candidates', addCandidate);
+router.get('/', getCandidatesByConstituency);
+router.get('/candidates', getCandidatesByConstituency);
+router.delete('/admin/candidates/:id', deleteCandidate);
 
 module.exports = router;

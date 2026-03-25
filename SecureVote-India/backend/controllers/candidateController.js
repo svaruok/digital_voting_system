@@ -1,38 +1,49 @@
-const Candidate = require("../models/candidate");
+const Candidate = require('../models/candidate');
 
-
-// ADD CANDIDATE (ADMIN)
+// ADD
 exports.addCandidate = async (req, res) => {
+  const { name, party, partySymbol, constituency, manifesto } = req.body;
 
-  const { name, party } = req.body;
+  if (!name || !party) {
+    return res.status(400).json({ error: 'Name and party required' });
+  }
 
   try {
-
     const candidate = new Candidate({
-      name,
-      party
+      name: name.trim(),
+      party: party.trim(),
+      partySymbol: partySymbol || '🗳️',
+      constituency: constituency || "India",
+      manifesto: manifesto || ''
     });
 
     await candidate.save();
+    res.status(201).json({ message: 'Candidate added', candidate });
 
-    res.json({
-      message: "Candidate Added Successfully"
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add candidate' });
   }
 };
 
-// GET ALL CANDIDATES
-exports.getCandidates = async (req, res) => {
 
+// GET ALL (ALL INDIA)
+exports.getCandidatesByConstituency = async (req, res) => {
   try {
-
-    const candidates = await Candidate.find();
+    const candidates = await Candidate.find().sort({ name: 1 });
     res.json(candidates);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch candidates' });
+  }
+};
 
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+
+// DELETE
+exports.deleteCandidate = async (req, res) => {
+  try {
+    await Candidate.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Deleted' });
+  } catch {
+    res.status(500).json({ error: 'Delete failed' });
   }
 };
