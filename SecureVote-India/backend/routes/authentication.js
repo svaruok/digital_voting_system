@@ -4,7 +4,6 @@ const router  = express.Router();
 const {
   registerUser,
   loginUser,
-  verifyOtp,
   getProfile
 } = require('../controllers/authController');
 
@@ -16,8 +15,6 @@ router.post('/register', registerUser);
 // POST /api/user/login
 router.post('/login', loginUser);
 
-// POST /api/user/verify-otp
-router.post('/verify-otp', verifyOtp);
 
 // GET /api/user/profile (protected)
 router.get('/profile', authenticateUser, getProfile);

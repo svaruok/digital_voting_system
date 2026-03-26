@@ -68,9 +68,6 @@ const LoginPage = () => {
   const [loading, setLoading]     = useState(false);
 
   // Voter
-  const [voterStep, setVoterStep]     = useState(1);
-  const [email, setEmail]              = useState('');
-  const [voterId, setVoterId]          = useState('');
   const [dob, setDob]                  = useState('');
   const [voterOtp, setVoterOtp]        = useState('');
   const [voterUserId, setVoterUserId]  = useState('');
@@ -112,21 +109,6 @@ localStorage.setItem('fullName', data.fullName);
 toast.success("Login successful 🎉");
 navigate('/dashboard');
     } catch (err) { toast.error(err.response?.data?.error || 'Login failed'); }
-    finally { setLoading(false); }
-  };
-
-  const handleVoterOtp = async () => {
-    if (voterOtp.length !== 6) return toast.error('Enter the full 6-digit OTP');
-    setLoading(true);
-    try {
-      const { data } = await axios.post(`${API}/api/user/verify-otp`, { userId: voterUserId, otp: voterOtp });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userRole', 'voter');
-      localStorage.setItem('constituency', data.constituency);
-      localStorage.setItem('fullName', data.fullName);
-      toast.success('Welcome, ' + data.fullName + '! 🎉');
-      navigate('/dashboard');
-    } catch (err) { toast.error(err.response?.data?.error || 'OTP verification failed'); }
     finally { setLoading(false); }
   };
 
@@ -289,32 +271,28 @@ navigate('/dashboard');
               <div style={S.dot(voterStep===2, false)} />
             </div>
 
-            {voterStep === 1 ? <>
-              <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>{t('voterCredentials') || 'Voter Credentials'}</h3>
-              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:'0 0 6px' }}>Enter your Gmail, Voter ID and DOB - OTP sent to Gmail</p>
-              <label style={S.label}>{t('email') || 'Gmail Address'} *</label>
-              <input style={S.input} type="email" placeholder="your.email@gmail.com" value={email}
-                onChange={e=>setEmail(e.target.value)} onFocus={focusIn} onBlur={focusOut} />
-              <label style={S.label}>{t('voterId') || 'Voter ID'} *</label>
-              <input style={S.input} placeholder="e.g. KA/01/123/456789" value={voterId}
-                onChange={e=>setVoterId(e.target.value)} onFocus={focusIn} onBlur={focusOut} />
-              <label style={S.label}>{t('dob') || 'Date of Birth'} *</label>
-              <input style={S.input} type="date" value={dob}
-                onChange={e=>setDob(e.target.value)} onFocus={focusIn} onBlur={focusOut} />
-              <button style={{ ...S.btn, opacity: loading?0.7:1 }} onClick={handleVoterLogin} disabled={loading}>
-                {loading ? '⏳ Sending OTP...' : 'Send OTP to Gmail →'}
-              </button>
-            </> : <>
-              <button style={S.back} onClick={() => { setVoterStep(1); setVoterOtp(''); }}>← Back</button>
-              <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Enter OTP</h3>
-              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:0 }}>
-                Check your Gmail inbox (or server console for dev)
-              </p>
-              <OtpInput value={voterOtp} onChange={setVoterOtp} />
-              <button style={{ ...S.btn, marginTop:'8px', opacity: loading?0.7:1 }} onClick={handleVoterOtp} disabled={loading}>
-                {loading ? '⏳ Verifying...' : '✓ Login'}
-              </button>
-            </>}
+            <div>
+  <h3>Voter Login</h3>
+
+  <input placeholder="Email"
+    value={email}
+    onChange={e => setEmail(e.target.value)}
+  />
+
+  <input placeholder="Voter ID"
+    value={voterId}
+    onChange={e => setVoterId(e.target.value)}
+  />
+
+  <input type="date"
+    value={dob}
+    onChange={e => setDob(e.target.value)}
+  />
+
+  <button onClick={handleVoterLogin}>
+    Login
+  </button>
+</div>
             </div>
           )}
 
