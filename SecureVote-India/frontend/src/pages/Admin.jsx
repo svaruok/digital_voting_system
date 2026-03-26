@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const Admin = () => {
+  const API = process.env.REACT_APP_API_URL || 'https://digital-voting-system-2-p2gy.onrender.com';
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState(null);
