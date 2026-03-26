@@ -1,3 +1,3 @@
 # digital_voting_system
 
-digital-voting-system-opal.vercel.app
+https://digital-voting-system-opal.vercel.app
