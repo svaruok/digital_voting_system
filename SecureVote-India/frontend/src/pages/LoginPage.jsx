@@ -240,15 +240,19 @@ const LoginPage = () => {
       <div style={S.card}>
 
         {/* Header */}
+
         <div style={S.hdr}>
-          <div style={{ fontSize: '2.5rem' }}>🗳️</div>
+
+          <img src="/logo192.png" alt="Govt of India" style={{ width: '80px', height: '80px' }} />
+
           <h2 style={{ margin: '4px 0 0', color: '#fff', fontSize: '1.3rem', fontFamily: 'Playfair Display, serif' }}>
-            SecureVote India
+            Government of India<br /><small style={{ fontSize: '0.85em', fontWeight: '400' }}>Digital Voting Portal</small>
           </h2>
           <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.85)', fontSize: '0.78rem' }}>
-            Election Commission of India · Blockchain Secured
+            Election Commission of India · Secure & Blockchain Protected
           </p>
         </div>
+
 
         {/* Tabs */}
         <div style={S.tabs}>

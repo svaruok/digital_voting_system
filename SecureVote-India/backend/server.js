@@ -138,7 +138,7 @@ app.post('/api/init-demo', async (req, res) => {
   try {
     const Admin = require('./models/admin');
     const Candidate = require('./models/candidate');
-    const Election = require('./models/election');
+const Election = require('./models/Election');
     
     await Admin.deleteMany({});
     await Election.deleteMany({});
