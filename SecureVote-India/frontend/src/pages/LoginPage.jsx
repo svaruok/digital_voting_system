@@ -104,9 +104,13 @@ const LoginPage = () => {
         voterId: voterId.trim(), 
         dateOfBirth: dob 
       });
-      setVoterUserId(data.userId);
-      setVoterStep(2);
-      toast.success(data.message);
+      localStorage.setItem('token', data.token);
+localStorage.setItem('userRole', 'voter');
+localStorage.setItem('constituency', data.constituency);
+localStorage.setItem('fullName', data.fullName);
+
+toast.success("Login successful 🎉");
+navigate('/dashboard');
     } catch (err) { toast.error(err.response?.data?.error || 'Login failed'); }
     finally { setLoading(false); }
   };
