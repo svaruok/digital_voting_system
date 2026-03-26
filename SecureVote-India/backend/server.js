@@ -9,7 +9,7 @@ const connectDB  = require('./config/db');
 const User       = require('./models/user');
 const Admin      = require('./models/admin');
 const Candidate  = require('./models/candidate');
-const Election   = require('./models/election');
+const Election   = require('./models/Election');
 
 const app = express();
 
