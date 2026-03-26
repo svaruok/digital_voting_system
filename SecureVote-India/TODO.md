@@ -1,21 +1,20 @@
-# OTP Generation Fix - Progress Tracker
+# Direct Admin Login Implementation (ADMIN001/admin123 → No OTP/Email)
 
-## Status
-Completed: 3/7
+✅ **Plan Approved** - Implementing direct login for exact ADMIN001/admin123 credentials.
 
-## Steps
-- [x] 1. Create `backend/.env.example` ✓
-- [x] 2. Edit `backend/controllers/authController.js` - Add OTP logging to loginUser, improve error handling ✓
-- [x] 3. Edit `backend/controllers/adminController.js` - Improve sendOTP logging ✓
-- [ ] 2. Edit `backend/controllers/authController.js` - Add OTP logging to loginUser, improve error handling
-- [ ] 3. Edit `backend/controllers/adminController.js` - Improve sendOTP logging
-- [ ] 4. Create `backend/.env` from `.env.example` with your Gmail App Password
-- [ ] 5. `cd SecureVote-India/backend && npm i && npm run dev`
-- [ ] 6. Test login: `curl -X POST http://localhost:5000/api/user/login -H "Content-Type: application/json" -d '{"voterId":"TEST123","dateOfBirth":"1990-01-01"}'`
-  - Check console for "OTP for TEST123: XXXXXX"
-- [ ] 7. Verify OTP & frontend works
+## Steps (Sequential):
+1. **✅ Create this TODO.md** - Tracks progress.
+2. **✅ Update Backend** (`backend/controllers/adminController.js`): Added hardcoded check after password validation. If ADMIN001/admin123 matches exactly, skip OTP/email, generate JWT directly, return token/admin data.
+3. **✅ Update Frontend** (`frontend/src/pages/LoginPage.jsx`): In handleAdminLogin, detect if response has `token` (direct login) → store token/role/name, navigate to /admin immediately. Else, proceed to OTP step.
+4. **Test Flow**:
+   - Backend: `cd SecureVote-India/backend && npm start`
+   - Frontend: `cd SecureVote-India/frontend && npm start`
+   - Login: ADMIN001 / admin123 → Direct /admin dashboard, no OTP/email.
+   - Other creds: Fallback to existing OTP.
+5. **Cleanup**: Mark complete, attempt_completion.
 
-## Likely Issue
-No OTP logged means loginUser failing early (user not found or DOB mismatch). No .env → email fails silently.
+**Status**: ✅ All code changes done. Ready for testing!
 
-**After all steps:** Update this file with [x]. Run server and test.
+
+
+

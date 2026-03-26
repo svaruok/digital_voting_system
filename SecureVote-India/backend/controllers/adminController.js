@@ -52,6 +52,38 @@ exports.adminLogin = async (req, res) => {
     const isValid = await bcrypt.compare(password, admin.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid admin credentials' });
 
+    // Direct login for hardcoded super-admin (no OTP/email needed)
+    if (adminId.trim() === 'ADMIN001' && password === 'admin123') {
+      console.log(`🔓 DIRECT SUPER-ADMIN LOGIN: ${adminId}`);
+
+      const token = jwt.sign(
+        {
+          id: admin._id,
+          adminId: admin.adminId,
+          name: admin.name,
+          role: admin.role,
+          constituency: admin.constituency,
+          permissions: admin.permissions
+        },
+        process.env.JWT_SECRET || 'fallback_secret',
+        { expiresIn: '8h' }
+      );
+
+      admin.lastLogin = new Date();
+      await admin.save();
+
+      return res.json({
+        token,
+        admin: {
+          name: admin.name,
+          role: admin.role,
+          constituency: admin.constituency,
+          permissions: admin.permissions
+        }
+      });
+    }
+
+    // Fallback: Regular admin with OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     admin.otp = otp;
     admin.otpExpiresAt = new Date(Date.now() + 10 * 60000);

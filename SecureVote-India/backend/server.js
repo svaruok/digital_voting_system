@@ -148,7 +148,7 @@ const Election = require('./models/Election');
     await Admin.create({
       adminId: 'ADMIN001',
       name: 'Election Commissioner',
-      email: 'admin@eci.gov.in',
+      email: 'vincenzoop109@gmail.com',
       password: hash,
       role: 'super',
       permissions: ['all']

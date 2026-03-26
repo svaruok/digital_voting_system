@@ -132,6 +132,18 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const { data } = await axios.post(`${API}/api/admin/login`, { adminId: adminId.trim(), password: adminPassword });
+      
+      // Direct login for super-admin (ADMIN001/admin123) - no OTP needed
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userRole', data.admin.role);
+        localStorage.setItem('adminName', data.admin.name);
+        toast.success(`Direct login successful! Welcome, ${data.admin.name} 👑`);
+        navigate('/admin');
+        return;
+      }
+
+      // Regular admin: Proceed to OTP
       setAdminMongoId(data.adminMongoId);
       setAdminStep(2);
       toast.success(data.message);
