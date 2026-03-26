@@ -5,7 +5,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import './Dashboard.css';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API = process.env.REACT_APP_API_URL || 'https://digital-voting-system-2-p2gy.onrender.com';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
