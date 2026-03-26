@@ -4,9 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import './Dashboard.css';
-
-const API = process.env.REACT_APP_API_URL || 'https://digital-voting-system-2-p2gy.onrender.com';
-
+const API = 'https://digital-voting-system-2-p2gy.onrender.com';
 const UserDashboard = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
