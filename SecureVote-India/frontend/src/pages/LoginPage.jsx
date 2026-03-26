@@ -5,7 +5,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import './LoginPage.css';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API = 'https://digital-voting-system-2-p2gy.onrender.com';
 
 // ─── OTP Input ─────────────────────────────────────────────
 const OtpInput = ({ value, onChange }) => {
