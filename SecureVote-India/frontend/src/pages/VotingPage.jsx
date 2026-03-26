@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
-import API from '../services/api';
+import axios from 'axios';
 import toast from 'react-hot-toast';
-import './VotingPage.css';
+import './LoginPage.css';
+
+const API = process.env.REACT_APP_API_URL || 'https://digital-voting-system-2-p2gy.onrender.com';
 
 const CONTRACT_ADDRESS = process.env.REACT_APP_CONTRACT_ADDRESS || '';
 const EXPECTED_CHAIN = process.env.REACT_APP_CHAIN_ID || '0xaa36a7';
