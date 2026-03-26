@@ -15,7 +15,6 @@ const GovtHeader = () => {
     setIsLoggedIn(!!localStorage.getItem('token'));
   }, []);
 
-  // Re-check on storage changes (e.g. login/logout in another tab)
   useEffect(() => {
     const handleStorage = () => setIsLoggedIn(!!localStorage.getItem('token'));
     window.addEventListener('storage', handleStorage);
@@ -34,9 +33,10 @@ const GovtHeader = () => {
         <div className="govt-logo-container">
           <div className="emblem-container">
             <img
-              src="https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Emblem_of_India.svg/100px-Emblem_of_India.svg.png"
+              src="/Gemini_Generated_Image_ph1mcdph1mcdph1m.png"
               alt="Government of India Emblem"
               className="govt-emblem"
+              style={{ width: '64px', height: '64px', objectFit: 'contain' }}
             />
             <div className="govt-title">
               <h1>Digital Online Voting Platform</h1>
@@ -62,8 +62,8 @@ const GovtHeader = () => {
           {languages.map(lang => (
             <button
               key={lang}
-  className={`lang-btn ${activeLangDisplay === lang ? 'active' : ''}`}
-  onClick={() => changeLanguage(lang)}
+              className={`lang-btn ${activeLangDisplay === lang ? 'active' : ''}`}
+              onClick={() => changeLanguage(lang)}
             >
               {lang}
             </button>

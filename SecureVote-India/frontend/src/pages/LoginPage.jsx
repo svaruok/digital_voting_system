@@ -262,7 +262,7 @@ const LoginPage = () => {
 
         {/* ── Header ── */}
         <div style={S.hdr}>
-          <img src="/logo192.png" alt="Govt of India" style={{ width: '80px', height: '80px' }} />
+          <img src="/Gemini_Generated_Image_ph1mcdph1mcdph1m.png" alt="Govt of India" style={{ width: '80px', height: '80px' }} />
           <h2 style={{ margin: '4px 0 0', color: '#fff', fontSize: '1.3rem', fontFamily: 'Playfair Display, serif' }}>
             Government of India<br />
             <small style={{ fontSize: '0.85em', fontWeight: '400' }}>Digital Voting Portal</small>
