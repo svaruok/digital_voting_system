@@ -1,37 +1,6 @@
-// ✅ Models (correct casing)
 const Admin = require('../models/admin');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-// ✅ Resend (NEW)
-const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// ✅ SEND OTP FUNCTION (Resend)
-const sendOTP = async (email, otp, name) => {
-  try {
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: email,
-      subject: "SecureVote India - OTP",
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:auto">
-          <h2>🗳️ SecureVote India</h2>
-          <p>Hello <strong>${name}</strong>,</p>
-          <p>Your OTP is:</p>
-          <h1 style="letter-spacing:5px">${otp}</h1>
-          <p>This OTP is valid for 10 minutes.</p>
-        </div>
-      `
-    });
-
-    console.log(`✅ OTP sent via Resend to ${email}`);
-    return true;
-  } catch (err) {
-    console.error("❌ Resend error:", err);
-    return false;
-  }
-};
 
 // ================= ADMIN LOGIN =================
 exports.adminLogin = async (req, res) => {
@@ -54,10 +23,8 @@ exports.adminLogin = async (req, res) => {
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
-    // ✅ SUPER ADMIN DIRECT LOGIN
+    // ✅ DIRECT LOGIN (SUPER ADMIN)
     if (adminId.trim() === 'ADMIN001' && password === 'admin123') {
-      console.log(`🔓 DIRECT SUPER-ADMIN LOGIN: ${adminId}`);
-
       const token = jwt.sign(
         {
           id: admin._id,
@@ -71,9 +38,6 @@ exports.adminLogin = async (req, res) => {
         { expiresIn: '8h' }
       );
 
-      admin.lastLogin = new Date();
-      await admin.save();
-
       return res.json({
         token,
         admin: {
@@ -85,19 +49,19 @@ exports.adminLogin = async (req, res) => {
       });
     }
 
-    // ✅ NORMAL ADMIN → OTP FLOW
+    // ✅ GENERATE OTP (NO EMAIL)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     admin.otp = otp;
     admin.otpExpiresAt = new Date(Date.now() + 10 * 60000);
     await admin.save();
 
-    console.log(`🔐 ADMIN OTP for ${adminId} (${admin.email}): ${otp}`);
+    console.log(`🔐 ADMIN OTP for ${adminId}: ${otp}`);
 
-    const sent = await sendOTP(admin.email, otp, admin.name);
-
+    // 🔥 SEND OTP DIRECTLY TO FRONTEND
     res.json({
-      message: sent ? `OTP sent to ${admin.email}` : "OTP generated (check logs)",
+      message: "OTP generated",
+      otp: otp,
       adminMongoId: admin._id
     });
 
@@ -165,9 +129,9 @@ exports.verifyOtp = async (req, res) => {
 // ================= ADMIN STATS =================
 exports.getStats = async (req, res) => {
   try {
-    const User = require('../models/user');           // lowercase
-    const Candidate = require('../models/candidate'); // lowercase
-    const Election = require('../models/Election');   // capital E
+    const User = require('../models/user');
+    const Candidate = require('../models/candidate');
+    const Election = require('../models/Election');
 
     const [totalVoters, votesCast, totalCandidates, activeElections] =
       await Promise.all([

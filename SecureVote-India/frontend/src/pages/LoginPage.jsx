@@ -132,7 +132,8 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const { data } = await axios.post(`${API}/api/admin/login`, { adminId: adminId.trim(), password: adminPassword });
-      
+      // 🔥 ADD THIS LINE HERE
+      // if (data.otp) alert("Your OTP is: " + data.otp)
       // Direct login for super-admin (ADMIN001/admin123) - no OTP needed
       if (data.token) {
         localStorage.setItem('token', data.token);
