@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-
-  const API = process.env.REACT_APP_API_URL || 'https://digital-voting-system-2-p2gy.onrender.com';
-
+const API = 'https://digital-voting-system-2-p2gy.onrender.com';
 const Admin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
