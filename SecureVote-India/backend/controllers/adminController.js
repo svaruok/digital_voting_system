@@ -8,8 +8,16 @@ const jwt       = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 const sendOTP = async (email, otp, name) => {
@@ -167,7 +175,7 @@ exports.getStats = async (req, res) => {
     // Bug 5 (all 3 requires): wrong casing on model imports inside the function
     const User = require('../models/user');
 const Candidate = require('../models/candidate');
-const Election = require('../models/election');
+const Election = require('../models/Election');
 
     const [totalVoters, votesCast, totalCandidates, activeElections] = await Promise.all([
       User.countDocuments(),
