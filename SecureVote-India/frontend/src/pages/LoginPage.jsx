@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import './LoginPage.css';
 
 const API = 'https://digital-voting-system-2-p2gy.onrender.com';
 
-// ─── OTP Input ─────────────────────────────────────────────
+// ─── OTP Input (kept for Admin 2FA only) ────────────────────────────────────
 const OtpInput = ({ value, onChange }) => {
   const r0 = useRef(null); const r1 = useRef(null); const r2 = useRef(null);
   const r3 = useRef(null); const r4 = useRef(null); const r5 = useRef(null);
@@ -62,24 +61,23 @@ const OtpInput = ({ value, onChange }) => {
 };
 
 const LoginPage = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('voter');
   const [loading, setLoading]     = useState(false);
 
-  // Voter
-  const [dob, setDob]                  = useState('');
-  const [voterOtp, setVoterOtp]        = useState('');
-  const [voterUserId, setVoterUserId]  = useState('');
+  // ── Voter states ────────────────────────────────────────────────────────────
+  const [email, setEmail]     = useState('');
+  const [voterId, setVoterId] = useState('');
+  const [dob, setDob]         = useState('');
 
-  // Admin
+  // ── Admin states ────────────────────────────────────────────────────────────
   const [adminStep, setAdminStep]         = useState(1);
   const [adminId, setAdminId]             = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminOtp, setAdminOtp]           = useState('');
   const [adminMongoId, setAdminMongoId]   = useState('');
 
-  // Register
+  // ── Register states ─────────────────────────────────────────────────────────
   const [reg, setReg] = useState({
     voterId: '', fullName: '', dateOfBirth: '', email: '',
     phone: '', state: '', constituency: '', address: ''
@@ -91,53 +89,64 @@ const LoginPage = () => {
     if (token) navigate(['super','district','booth'].includes(role) ? '/admin' : '/dashboard');
   }, [navigate]);
 
-  // ── Voter handlers ──────────────────────────────────────────────────────────
+  // ── Voter Login (DIRECT — NO OTP) ───────────────────────────────────────────
   const handleVoterLogin = async () => {
-    if (!email.trim() || !voterId.trim() || !dob) return toast.error('Enter Gmail, Voter ID and DOB');
+    if (!email.trim() || !voterId.trim() || !dob) {
+      return toast.error('Enter Email, Voter ID and Date of Birth');
+    }
     setLoading(true);
     try {
-      const { data } = await axios.post(`${API}/api/user/login`, { 
-        email: email.trim().toLowerCase(), 
-        voterId: voterId.trim(), 
-        dateOfBirth: dob 
+      const { data } = await axios.post(`${API}/api/user/login`, {
+        email: email.trim().toLowerCase(),
+        voterId: voterId.trim(),
+        dateOfBirth: dob
       });
-      localStorage.setItem('token', data.token);
-localStorage.setItem('userRole', 'voter');
-localStorage.setItem('constituency', data.constituency);
-localStorage.setItem('fullName', data.fullName);
 
-toast.success("Login successful 🎉");
-navigate('/dashboard');
-    } catch (err) { toast.error(err.response?.data?.error || 'Login failed'); }
-    finally { setLoading(false); }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userRole', 'voter');
+      localStorage.setItem('constituency', data.constituency);
+      localStorage.setItem('fullName', data.fullName);
+
+      toast.success('Login successful 🎉');
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ── Admin handlers ──────────────────────────────────────────────────────────
+  // ── Admin Step 1 ────────────────────────────────────────────────────────────
   const handleAdminLogin = async () => {
     if (!adminId.trim() || !adminPassword) return toast.error('Enter Admin ID and Password');
     setLoading(true);
     try {
       const { data } = await axios.post(`${API}/api/admin/login`, { adminId: adminId.trim(), password: adminPassword });
-      // 🔥 ADD THIS LINE HERE
-      // if (data.otp) alert("Your OTP is: " + data.otp)
-      // Direct login for super-admin (ADMIN001/admin123) - no OTP needed
+
+      // Direct login (super-admin ADMIN001)
       if (data.token) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('userRole', data.admin.role);
         localStorage.setItem('adminName', data.admin.name);
-        toast.success(`Direct login successful! Welcome, ${data.admin.name} 👑`);
+        toast.success(`Welcome, ${data.admin.name} 👑`);
         navigate('/admin');
         return;
       }
 
-      // Regular admin: Proceed to OTP
+      // Show OTP in alert so admin can use it
+      if (data.otp) alert('Your OTP is: ' + data.otp);
+
       setAdminMongoId(data.adminMongoId);
       setAdminStep(2);
-      toast.success(data.message);
-    } catch (err) { toast.error(err.response?.data?.error || 'Admin login failed'); }
-    finally { setLoading(false); }
+      toast.success(data.message || 'OTP generated');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Admin login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // ── Admin Step 2 (OTP verify) ───────────────────────────────────────────────
   const handleAdminOtp = async () => {
     if (adminOtp.length !== 6) return toast.error('Enter the full 6-digit OTP');
     setLoading(true);
@@ -148,18 +157,21 @@ navigate('/dashboard');
       localStorage.setItem('adminName', data.admin.name);
       toast.success('Welcome, ' + data.admin.name + '! 🎉');
       navigate('/admin');
-    } catch (err) { toast.error(err.response?.data?.error || 'OTP verification failed'); }
-    finally { setLoading(false); }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ── Register handler ────────────────────────────────────────────────────────
+  // ── Register ────────────────────────────────────────────────────────────────
   const handleRegister = async () => {
-    const { voterId, fullName, dateOfBirth, email, phone, state, constituency } = reg;
-    if (!voterId || !fullName || !dateOfBirth || !email || !phone || !state || !constituency) {
+    const { voterId: rVoterId, fullName, dateOfBirth, email: rEmail, phone, state, constituency } = reg;
+    if (!rVoterId || !fullName || !dateOfBirth || !rEmail || !phone || !state || !constituency) {
       return toast.error('Please fill all required fields');
     }
-    if (voterId.trim().length < 5) return toast.error('Voter ID must be at least 5 characters');
-    if (!/\S+@\S+\.\S+/.test(email)) return toast.error('Enter a valid email address');
+    if (rVoterId.trim().length < 5) return toast.error('Voter ID must be at least 5 characters');
+    if (!/\S+@\S+\.\S+/.test(rEmail)) return toast.error('Enter a valid email address');
     if (phone.replace(/\D/g,'').length < 10) return toast.error('Enter a valid 10-digit phone number');
     setLoading(true);
     try {
@@ -167,8 +179,11 @@ navigate('/dashboard');
       toast.success(data.message);
       setActiveTab('voter');
       setVoterId(reg.voterId.trim());
-    } catch (err) { toast.error(err.response?.data?.error || 'Registration failed'); }
-    finally { setLoading(false); }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── Styles ──────────────────────────────────────────────────────────────────
@@ -215,6 +230,7 @@ navigate('/dashboard');
       border: 'none', borderRadius: '10px', color: '#fff',
       fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer',
       marginTop: '20px', fontFamily: 'Outfit, sans-serif',
+      opacity: loading ? 0.7 : 1,
     },
     back: {
       background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
@@ -232,28 +248,31 @@ navigate('/dashboard');
   const focusIn  = e => e.target.style.borderColor = '#FF9933';
   const focusOut = e => e.target.style.borderColor = 'rgba(255,255,255,0.12)';
 
-  const indianStates = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh'];
+  const indianStates = [
+    'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa',
+    'Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala',
+    'Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland',
+    'Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura',
+    'Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh'
+  ];
 
   return (
     <div className="login-page">
       <div style={S.card}>
 
-        {/* Header */}
-
+        {/* ── Header ── */}
         <div style={S.hdr}>
-
           <img src="/logo192.png" alt="Govt of India" style={{ width: '80px', height: '80px' }} />
-
           <h2 style={{ margin: '4px 0 0', color: '#fff', fontSize: '1.3rem', fontFamily: 'Playfair Display, serif' }}>
-            Government of India<br /><small style={{ fontSize: '0.85em', fontWeight: '400' }}>Digital Voting Portal</small>
+            Government of India<br />
+            <small style={{ fontSize: '0.85em', fontWeight: '400' }}>Digital Voting Portal</small>
           </h2>
           <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.85)', fontSize: '0.78rem' }}>
             Election Commission of India · Secure & Blockchain Protected
           </p>
         </div>
 
-
-        {/* Tabs */}
+        {/* ── Tabs ── */}
         <div style={S.tabs}>
           {[['voter','👤 Voter Login'],['admin','🔐 Admin'],['register','📝 Register']].map(([k,l]) => (
             <button key={k} style={S.tab(activeTab===k)} onClick={() => setActiveTab(k)}>{l}</button>
@@ -262,113 +281,181 @@ navigate('/dashboard');
 
         <div style={S.body}>
 
-          {/* ── Voter Login ── */}
+          {/* ════════════════════════════════════════
+              VOTER LOGIN — DIRECT (NO OTP)
+          ════════════════════════════════════════ */}
           {activeTab === 'voter' && (
             <div>
-            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'18px' }}>
-              <div style={S.dot(voterStep===1, voterStep>1)} />
-              <div style={S.line(voterStep>1)} />
-              <div style={S.dot(voterStep===2, false)} />
-            </div>
+              <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Voter Login</h3>
+              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:'0 0 6px' }}>
+                Enter your registered credentials to vote
+              </p>
 
-            <div>
-  <h3>Voter Login</h3>
+              <label style={S.label}>Email Address *</label>
+              <input
+                style={S.input}
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onFocus={focusIn}
+                onBlur={focusOut}
+              />
 
-  <input placeholder="Email"
-    value={email}
-    onChange={e => setEmail(e.target.value)}
-  />
+              <label style={S.label}>Voter ID *</label>
+              <input
+                style={S.input}
+                placeholder="e.g. KA/01/123/456789"
+                value={voterId}
+                onChange={e => setVoterId(e.target.value)}
+                onFocus={focusIn}
+                onBlur={focusOut}
+              />
 
-  <input placeholder="Voter ID"
-    value={voterId}
-    onChange={e => setVoterId(e.target.value)}
-  />
+              <label style={S.label}>Date of Birth *</label>
+              <input
+                style={S.input}
+                type="date"
+                value={dob}
+                onChange={e => setDob(e.target.value)}
+                onFocus={focusIn}
+                onBlur={focusOut}
+              />
 
-  <input type="date"
-    value={dob}
-    onChange={e => setDob(e.target.value)}
-  />
+              <button style={S.btn} onClick={handleVoterLogin} disabled={loading}>
+                {loading ? '⏳ Logging in...' : '🗳️ Login & Vote →'}
+              </button>
 
-  <button onClick={handleVoterLogin}>
-    Login
-  </button>
-</div>
+              <p style={{ textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.76rem', marginTop:'10px' }}>
+                Not registered? Switch to Register tab
+              </p>
             </div>
           )}
 
-          {/* ── Admin Login ── */}
-          {activeTab === 'admin' && <>
-            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'18px' }}>
-              <div style={S.dot(adminStep===1, adminStep>1)} />
-              <div style={S.line(adminStep>1)} />
-              <div style={S.dot(adminStep===2, false)} />
-            </div>
-
-            {adminStep === 1 ? <>
-              <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Admin Access</h3>
-              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:'0 0 6px' }}>Restricted to authorized personnel only</p>
-              <label style={S.label}>Admin ID *</label>
-              <input style={S.input} placeholder="e.g. ADMIN001" value={adminId}
-                onChange={e=>setAdminId(e.target.value)} onFocus={focusIn} onBlur={focusOut} />
-              <label style={S.label}>Password *</label>
-              <input style={S.input} type="password" placeholder="Enter your password" value={adminPassword}
-                onChange={e=>setAdminPassword(e.target.value)} onFocus={focusIn} onBlur={focusOut}
-                onKeyDown={e => e.key==='Enter' && handleAdminLogin()} />
-              <button style={{ ...S.btn, opacity: loading?0.7:1 }} onClick={handleAdminLogin} disabled={loading}>
-                {loading ? '⏳ Verifying...' : 'Continue →'}
-              </button>
-            </> : <>
-              <button style={S.back} onClick={() => { setAdminStep(1); setAdminOtp(''); }}>← Back</button>
-              <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Two-Factor Verification</h3>
-              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:0 }}>
-                OTP sent to your registered email. Check server terminal if email is not configured.
-              </p>
-              <OtpInput value={adminOtp} onChange={setAdminOtp} />
-              <button style={{ ...S.btn, marginTop:'8px', opacity: loading?0.7:1 }} onClick={handleAdminOtp} disabled={loading}>
-                {loading ? '⏳ Verifying...' : '✓ Verify & Enter Dashboard'}
-              </button>
-            </>}
-          </>}
-
-          {/* ── Register ── */}
-          {activeTab === 'register' && <>
-            <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Voter Registration</h3>
-            <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:'0 0 6px' }}>Register with your official voter details</p>
-
-            {[
-              ['voterId',     'Voter ID *',           'text',  'e.g. KA/01/123/456789'],
-              ['fullName',    'Full Name *',           'text',  'As on official records'],
-              ['dateOfBirth', 'Date of Birth *',       'date',  ''],
-              ['email',       'Email Address *',       'email', 'For OTP delivery'],
-              ['phone',       'Mobile Number *',       'tel',   '10-digit mobile number'],
-              ['address',     'Residential Address',   'text',  'Optional'],
-            ].map(([field, label, type, placeholder]) => (
-              <div key={field}>
-                <label style={S.label}>{label}</label>
-                <input style={S.input} type={type} placeholder={placeholder}
-                  value={reg[field]} onChange={e => setReg(p => ({ ...p, [field]: e.target.value }))}
-                  onFocus={focusIn} onBlur={focusOut} />
+          {/* ════════════════════════════════════════
+              ADMIN LOGIN — 2-STEP (OTP kept for admin)
+          ════════════════════════════════════════ */}
+          {activeTab === 'admin' && (
+            <>
+              {/* Step indicator */}
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'18px' }}>
+                <div style={S.dot(adminStep===1, adminStep>1)} />
+                <div style={S.line(adminStep>1)} />
+                <div style={S.dot(adminStep===2, false)} />
               </div>
-            ))}
 
-            <label style={S.label}>State *</label>
-            <select style={S.select} value={reg.state} onChange={e => setReg(p => ({ ...p, state: e.target.value }))}>
-              <option value="">Select your state</option>
-              {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+              {adminStep === 1 ? (
+                <>
+                  <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Admin Access</h3>
+                  <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:'0 0 6px' }}>
+                    Restricted to authorized personnel only
+                  </p>
 
-            <label style={S.label}>Constituency *</label>
-            <input style={S.input} placeholder="Your constituency name"
-              value={reg.constituency} onChange={e => setReg(p => ({ ...p, constituency: e.target.value }))}
-              onFocus={focusIn} onBlur={focusOut} />
+                  <label style={S.label}>Admin ID *</label>
+                  <input
+                    style={S.input}
+                    placeholder="e.g. ADMIN001"
+                    value={adminId}
+                    onChange={e => setAdminId(e.target.value)}
+                    onFocus={focusIn}
+                    onBlur={focusOut}
+                  />
 
-            <button style={{ ...S.btn, opacity: loading?0.7:1 }} onClick={handleRegister} disabled={loading}>
-              {loading ? '⏳ Registering...' : '✅ Register Voter'}
-            </button>
-            <p style={{ textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.76rem', marginTop:'10px' }}>
-              Already registered? Switch to Voter Login tab
-            </p>
-          </>}
+                  <label style={S.label}>Password *</label>
+                  <input
+                    style={S.input}
+                    type="password"
+                    placeholder="Enter your password"
+                    value={adminPassword}
+                    onChange={e => setAdminPassword(e.target.value)}
+                    onFocus={focusIn}
+                    onBlur={focusOut}
+                    onKeyDown={e => e.key === 'Enter' && handleAdminLogin()}
+                  />
+
+                  <button style={S.btn} onClick={handleAdminLogin} disabled={loading}>
+                    {loading ? '⏳ Verifying...' : 'Continue →'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button style={S.back} onClick={() => { setAdminStep(1); setAdminOtp(''); }}>← Back</button>
+                  <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Two-Factor Verification</h3>
+                  <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:0 }}>
+                    Check the popup for your OTP code.
+                  </p>
+                  <OtpInput value={adminOtp} onChange={setAdminOtp} />
+                  <button
+                    style={{ ...S.btn, marginTop:'8px' }}
+                    onClick={handleAdminOtp}
+                    disabled={loading}
+                  >
+                    {loading ? '⏳ Verifying...' : '✓ Verify & Enter Dashboard'}
+                  </button>
+                </>
+              )}
+            </>
+          )}
+
+          {/* ════════════════════════════════════════
+              REGISTER
+          ════════════════════════════════════════ */}
+          {activeTab === 'register' && (
+            <>
+              <h3 style={{ color:'#fff', margin:'0 0 2px', fontSize:'1.05rem' }}>Voter Registration</h3>
+              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.8rem', margin:'0 0 6px' }}>
+                Register with your official voter details
+              </p>
+
+              {[
+                ['voterId',     'Voter ID *',           'text',  'e.g. KA/01/123/456789'],
+                ['fullName',    'Full Name *',           'text',  'As on official records'],
+                ['dateOfBirth', 'Date of Birth *',       'date',  ''],
+                ['email',       'Email Address *',       'email', 'For account identification'],
+                ['phone',       'Mobile Number *',       'tel',   '10-digit mobile number'],
+                ['address',     'Residential Address',   'text',  'Optional'],
+              ].map(([field, label, type, placeholder]) => (
+                <div key={field}>
+                  <label style={S.label}>{label}</label>
+                  <input
+                    style={S.input}
+                    type={type}
+                    placeholder={placeholder}
+                    value={reg[field]}
+                    onChange={e => setReg(p => ({ ...p, [field]: e.target.value }))}
+                    onFocus={focusIn}
+                    onBlur={focusOut}
+                  />
+                </div>
+              ))}
+
+              <label style={S.label}>State *</label>
+              <select
+                style={S.select}
+                value={reg.state}
+                onChange={e => setReg(p => ({ ...p, state: e.target.value }))}
+              >
+                <option value="">Select your state</option>
+                {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+
+              <label style={S.label}>Constituency *</label>
+              <input
+                style={S.input}
+                placeholder="Your constituency name"
+                value={reg.constituency}
+                onChange={e => setReg(p => ({ ...p, constituency: e.target.value }))}
+                onFocus={focusIn}
+                onBlur={focusOut}
+              />
+
+              <button style={S.btn} onClick={handleRegister} disabled={loading}>
+                {loading ? '⏳ Registering...' : '✅ Register Voter'}
+              </button>
+              <p style={{ textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:'0.76rem', marginTop:'10px' }}>
+                Already registered? Switch to Voter Login tab
+              </p>
+            </>
+          )}
 
         </div>
       </div>
